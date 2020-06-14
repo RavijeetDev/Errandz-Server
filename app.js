@@ -10,6 +10,8 @@ const path = require('path');
 // ***********************************************************
 const express = require('express');
 const mysql = require('mysql');
+const formidable = require('express-formidable');
+const { sign } = require('crypto');
 
 
 
@@ -36,6 +38,7 @@ let allowCrossDomain = function (req, res, next) {
     next();
 }
 server.use(allowCrossDomain);
+server.use(formidable());
 
 /* <-----  The code below is used to connect the server to a local database  server -----> */
 var connection = mysql.createConnection({
@@ -54,15 +57,33 @@ connection.connect(function (error) {
     }
 })
 
-server.get('', (req, res) => {
 
-    connection.query('SELECT * FROM User', function(error, rows, fields) {
-        if(!!error) {
-            console.log('Error in database query\n');
-            console.log(error);
-        }else {
-            console.log('Success\n');
-            res.send(rows);
+server.post('/signup', (request, response) => {
+
+    let signUpFields = request.fields;
+    console.log(signUpFields)
+    saveDataOfSignedUpUser(signUpFields, (status, fetchedData) => {
+        response.send(fetchedData)
+    });
+
+});
+
+
+function saveDataOfSignedUpUser(signUpFields, callback) {
+
+    //create random number for user ID
+    let queryString = `INSERT INTO User (FirstName, LastName, EmailID, Password, UserType, Dob, LoginType, GoogleID) VALUES ("${signUpFields.firstName}", "${signUpFields.lastName}", "${signUpFields.emailID}", "${signUpFields.password}", ${signUpFields.userType}, "${signUpFields.dob}", ${signUpFields.loginType}, "${signUpFields.googleID}")`;
+    console.log(queryString)
+
+    connection.query(queryString, function (error, result) {
+        if(error) {
+            callback("Error");
+        } else {
+            
+            let getUserIDQuery = `SELECT ID FROM User WHERE FirstName = "${signUpFields.firstName}" AND "$"`
+            connection.query
         }
     })
-})
+
+}
+
