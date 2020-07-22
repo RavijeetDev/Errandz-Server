@@ -322,4 +322,68 @@ server.post('/userReviewList', (request, response) => {
     })
 })
 
+server.post('/historyJobInfo', (request, response) => {
+    let requestFields = request.fields;
+    dbResult.fetchHirerHistoryJobInfo(requestFields, (status, fetchedData) => {
+        if (status == 'success') {
+            response.send(
+                {
+                    "result": {
+                        "status": status,
+                        "message": "success"
+                    },
+                    "data": fetchedData
+                }
+            )
+        } else {
+            response.send({ "result": { "status": status, "message": fetchedData } })
+        }
+    })
+})
+
+server.post('/reviewsOfJob', (request, response) => {
+    let requestFields = request.fields;
+    dbResult.fetchReviewOfJob(requestFields, (status, fetchedData) => {
+        if (status == 'success') {
+            response.send(
+                {
+                    "result": {
+                        "status": status,
+                        "message": "success"
+                    },
+                    "data": fetchedData
+                }
+            )
+        } else {
+            response.send({ "result": { "status": status, "message": fetchedData } })
+        }
+    })
+})
+
+server.post('/postReview' , (request, response) => {
+    let requestFields = request.fields
+    dbResult.addNewReview(requestFields, (status, fetchedData) => {
+        response.send({ "result": { "status": status, "message": fetchedData } })
+    })
+})
+
+server.post('/jobRequestList', (request, response) => {
+    let requestFields = request.fields;
+    dbResult.getRequestedJobInfo(requestFields, (status, fetchedData) => {
+        if (status == 'success') {
+            response.send(
+                {
+                    "result": {
+                        "status": status,
+                        "message": "success"
+                    },
+                    "data": fetchedData
+                }
+            )
+        } else {
+            response.send({ "result": { "status": status, "message": fetchedData } })
+        }
+    })
+})
+
 

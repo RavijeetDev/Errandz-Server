@@ -239,20 +239,61 @@ function deleteActivationCodeEntry(emailID, activationType) {
 function fetchHirerHomeData(requestFields, callback) {
 
     let userID = requestFields.hirerID;
-    // get requests 
-    // get Number of jobs
-    // get upcoming jobs
-    // get history of jobs
+
     getNumberOfHirerPostedJobs(userID, (status, jobListNumber) => {
+
         if (status == 'success') {
-            // if(jobListNumber > 0) {
-            //     callback
-            // } else {
-            callback('success', { 'number_of_jobs': jobListNumber });
-            // }
+
+            let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.TaskerID, User.FirstName, User.LastName, User.ProfileImage, User.Dob, User.Bio,
+            COUNT(Review.ReviewerID) AS TotalReviews, SUM(Rating) AS TotalRating 
+            FROM Job, User, JobStatus 
+            LEFT JOIN Review 
+            ON JobStatus.TaskerID = Review.UserID
+            WHERE Job.JobID = JobStatus.JobID AND 
+            JobStatus.TaskerID = User.ID AND 
+            Job.HirerID = ${userID} AND JobStatus.Status = 1 
+            GROUP BY Job.JobID, JobStatus.ID ORDER BY DateRequested LIMIT 10`
+
+            connection.query(queryString, function (error, rows) {
+                if (error) {
+                    callback('error', 'System error - in fecthing jobs')
+                } else {
+                    let jobList = []
+                    for (i = 0; i < rows.length; i++) {
+                        jobList.push({
+                            'jobInfo': {
+                                'jobID': rows[i].JobID,
+                                'jobName': rows[i].Name,
+                                'jobWage': rows[i].Wage,
+                                'date': rows[i].Date,
+                                'description': rows[i].Description,
+                                'hirerID': rows[i].HirerID,
+                                'jobStatusID': rows[i].ID,
+                                'jobCategory': rows[i].JobCategory
+                            },
+                            'userInfo': {
+                                'userID': rows[i].TaskerID,
+                                'firstName': rows[i].FirstName,
+                                'lastName': rows[i].LastName,
+                                'dob': rows[i].Dob,
+                                'bio': rows[i].Bio,
+                                'profileImage': rows[i].ProfileImage,
+                                'numberOfReviews': rows[i].TotalReviews,
+                                'totalRating': rows[i].TotalRating == undefined ? 0 : rows[i].TotalRating
+                            }
+                        })
+                    }
+                    callback('success', {
+                        "number_of_jobs": jobListNumber,
+                        'jobList': jobList
+                    })
+                }
+            })
+
         }
     })
 }
+
 
 function getNumberOfHirerPostedJobs(userID, callback) {
     let queryString = `SELECT COUNT(JobID) AS NumberOfJobs FROM Job WHERE HirerID = ${userID}`;
@@ -276,7 +317,7 @@ function fetchPostJobResponse(requestFields, callback) {
     let hirerID = requestFields.hirerID;
 
     let queryString = `INSERT INTO Job (Name, Wage, Date, Description, JobCategory, HirerID) VALUES ("${jobName}", ${jobWage}, ${date}, "${jobDescription}", ${jobCategory}, ${hirerID})`;
-    console.log(queryString);
+
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System error');
@@ -289,8 +330,8 @@ function fetchPostJobResponse(requestFields, callback) {
 function fetchHirerUpcomingJobList(requestFields, callback) {
     let hirerID = requestFields.hirerID;
     let currentTimestamp = Date.now()
-    let queryString = `SELECT * FROM Job WHERE HirerID = ${hirerID} AND Date >= ${currentTimestamp}`;
-    console.log(queryString)
+    let queryString = `SELECT * FROM Job WHERE HirerID = ${hirerID} AND Date >= ${currentTimestamp} ORDER BY Date`;
+
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System Error')
@@ -316,7 +357,7 @@ function fetchHirerJobHistoryList(requestFields, callback) {
     let hirerID = requestFields.hirerID;
     let currentTimestamp = Date.now()
 
-    let queryString = `SELECT * FROM Job WHERE HirerID = ${hirerID} AND Date <= ${currentTimestamp}`;
+    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status, JobStatus.TaskerID FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status = 5 AND HirerID = ${hirerID} AND Date <= ${currentTimestamp} ORDER BY Date DESC`;
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System Error')
@@ -330,6 +371,9 @@ function fetchHirerJobHistoryList(requestFields, callback) {
                     'date': rows[i].Date,
                     'description': rows[i].Description,
                     'jobCategory': rows[i].JobCategory,
+                    'jobStatusID': rows[i].ID,
+                    'status': rows[i].Status,
+                    'taskerID': rows[i].TaskerID
                 })
             }
             callback('success', joblist)
@@ -337,8 +381,48 @@ function fetchHirerJobHistoryList(requestFields, callback) {
     })
 }
 
+function fetchHirerHistoryJobInfo(requestFields, callback) {
+    let jobID = requestFields.jobID;
+    let hirerID = requestFields.hirerID;
+    let taskerID = requestFields.taskerID;
+
+    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status, User.ID As UserID, User.FirstName, User.LastName, User.ProfileImage, User.Dob, User.Bio, (SELECT COUNT(ID) FROM Review WHERE UserID = ${taskerID}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${taskerID}) AS TotalRating FROM Job, JobStatus, User WHERE Job.JobID = JobStatus.JobID AND User.ID = JobStatus.TaskerID AND Job.JobID = ${jobID} AND Status = 5 AND JobStatus.TaskerID = ${taskerID}`
+    connection.query(queryString, function (error, rows) {
+        if (error) {
+            callback('error', 'System error')
+        } else {
+
+            let output = {
+                'jobInfo': {
+                    'jobID': rows[0].JobID,
+                    'jobName': rows[0].Name,
+                    'jobWage': rows[0].Wage,
+                    'date': rows[0].Date,
+                    'description': rows[0].Description,
+                    'taskerID': taskerID,
+                    'jobCategory': rows[0].JobCategory
+                },
+                'userInfo': {
+                    'userID': rows[0].UserID,
+                    'firstName': rows[0].FirstName,
+                    'lastName': rows[0].LastName,
+                    'profileImage': rows[0].ProfileImage,
+                    'dob': rows[0].Dob,
+                    'bio': rows[0].Bio,
+                    'numberOfReviews': rows[0].NumberOfReviews,
+                    'totalRating': rows[0].TotalRating == undefined ? 0 : rows[0].TotalRating
+                }
+            }
+
+
+
+            callback('success', output);
+        }
+    })
+}
+
 function fetchUserInfo(userId, callback) {
-    console.log(userId)
+
     let queryString = `SELECT User.ID, FirstName, LastName, EmailID, UserType, Dob, ProfileImage, Bio, (SELECT COUNT(ID) FROM Review WHERE UserID = ${userId}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${userId}) AS TotalRating FROM User WHERE ID = ${userId}`;
 
     connection.query(queryString, function (error, rows) {
@@ -346,7 +430,7 @@ function fetchUserInfo(userId, callback) {
             callback('error', 'System error');
         } else {
             callback('success', {
-                'userId': rows[0].ID,
+                'userID': rows[0].ID,
                 'firstName': rows[0].FirstName,
                 'lastName': rows[0].LastName,
                 'emailID': rows[0].EmailID,
@@ -368,7 +452,7 @@ function updateUserInfo(requestFields, callback) {
     let bio = requestFields.bio
 
     let queryString = `UPDATE User SET FirstName = '${firstName}', LastName = '${lastName}', Bio = '${bio}' WHERE ID = ${userID}`;
-    console.log(queryString);
+
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System error');
@@ -389,14 +473,14 @@ function fetchTaskerHomeData(requestFields, callback) {
             callback('error', 'System error - Approved Jobs')
         } else {
             let queryString = `SELECT * FROM (SELECT Job.JobID AS jobid, Name AS JobName, Wage As JobWage, Date As JobDate, Description AS JobInfo, HirerID AS Hirer, JobCategory AS Category FROM Job WHERE Date > ${currentTimestamp}) Q2 LEFT JOIN (SELECT Job.* , JobStatus.ID, JobStatus.TaskerID, JobStatus.Status FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND TaskerID = ${userID} AND Job.Date > ${currentTimestamp}) Q1 ON Q1.JobID = Q2.JobID ORDER BY Q2.JobDate`;
-            console.log(queryString)
+
             connection.query(queryString, function (error, rows) {
                 if (error) {
                     callback('error', 'System error')
                 } else {
                     let upcomingJobList = [];
                     for (i = 0; i < rows.length; i++) {
-                            console.log(rows[i])
+                        if (rows[i].Status == undefined || rows[i].Status == 4) {
                             upcomingJobList.push({
                                 'jobID': rows[i].jobid,
                                 'jobName': rows[i].JobName,
@@ -408,6 +492,7 @@ function fetchTaskerHomeData(requestFields, callback) {
                                 'jobWage': rows[i].JobWage,
                                 'jobStatusID': rows[i].ID == undefined ? 0 : rows[i].ID
                             })
+                        }
                     }
                     callback('success', { "approved_jobs": output, "upcoming_jobs": upcomingJobList });
                 }
@@ -418,7 +503,7 @@ function fetchTaskerHomeData(requestFields, callback) {
 
 function getTaskerApprovedJobList(userID, callback) {
     // SELECT Job.JobID, Name, Date, JobCategory,  From Job, JobRequest WHERE Job.JobID = JobRequest.JobID AND WorkerID = 14 AND STATUS = 1
-    let queryString = `SELECT JobStatus.ID As JobStatusID, Job.JobID, Name, JobCategory, Job.HirerID, Date, Description, Wage, Status From Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND TaskerID = ${userID} AND Status = 1`;
+    let queryString = `SELECT JobStatus.ID As JobStatusID, Job.JobID, Name, JobCategory, Job.HirerID, Date, Description, Wage, Status From Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND TaskerID = ${userID} AND Status = 2`;
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System error')
@@ -442,8 +527,6 @@ function getTaskerApprovedJobList(userID, callback) {
     })
 }
 
-
-
 function updateJobStatus(requestFields, callback) {
 
     let taskerID = requestFields.taskerID
@@ -456,9 +539,9 @@ function updateJobStatus(requestFields, callback) {
     let queryString;
     if (jobStatusID == 0) {
         if (status == 1) {
-            queryString = `INSERT INTO JobStatus (JobID, HirerID, TaskerID, Status, DateRequested) VALUES (${jobID}, ${hirerID}, ${taskerID}, ${status}, ${Date.now()})`
+            queryString = `INSERT INTO JobStatus (JobID, TaskerID, Status, DateRequested) VALUES (${jobID}, ${taskerID}, ${status}, ${Date.now()})`
         } else {
-            queryString = `INSERT INTO JobStatus (JobID, HirerID, TaskerID, Status) VALUES (${jobID}, ${hirerID}, ${taskerID}, ${status})`
+            queryString = `INSERT INTO JobStatus (JobID, TaskerID, Status) VALUES (${jobID}, ${taskerID}, ${status})`
         }
     } else {
         if (status == 1) {
@@ -483,11 +566,11 @@ function deleteJobFromJobStatusTable(requestFields, callback) {
     let queryString = `DELETE FROM JobStatus WHERE ID = ${jobStatusID}`
 
     connection.query(queryString, function (error, rows) {
-            if (error) {
-                callback('error', 'System error');
-            } else {
-                callback('success', 'Unsaved successfully');
-            }
+        if (error) {
+            callback('error', 'System error');
+        } else {
+            callback('success', 'Unsaved successfully');
+        }
     })
 }
 
@@ -497,7 +580,7 @@ function fetchTaskerAppliedJobList(requestFields, callback) {
     let queryString = `SELECT Job.* , JobStatus.ID As JobStatusID, JobStatus.Status, JobStatus.DateRequested FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status != 4 AND JobStatus.TaskerID = ${taskerID} ORDER BY Date`
 
     connection.query(queryString, function (error, rows) {
-        if(error) {
+        if (error) {
             callback('error', 'System error')
         } else {
             let joblist = [];
@@ -525,7 +608,7 @@ function fetchTaskerSavedJobList(requestFields, callback) {
     let queryString = `SELECT Job.* , JobStatus.ID As JobStatusID, JobStatus.Status, JobStatus.DateRequested FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status = 4 AND JobStatus.TaskerID = ${taskerID} ORDER BY Date`
 
     connection.query(queryString, function (error, rows) {
-        if(error) {
+        if (error) {
             callback('error', 'System error')
         } else {
             let joblist = [];
@@ -553,14 +636,15 @@ function fetchTaskerJobInfo(requestFields, callback) {
     let taskerID = requestFields.taskerID;
 
     let queryString = `SELECT Job.*, User.ID, FirstName, LastName, EmailID, ProfileImage, Dob, Bio, (SELECT COUNT(ID) FROM Review WHERE UserID = ${hirerID}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${hirerID}) AS TotalRating, (SELECT ID from JobStatus WHERE TaskerID = ${taskerID} AND JobID = ${jobID}) AS JobStatusID, (SELECT Status from JobStatus WHERE TaskerID = ${taskerID} AND JobID = ${jobID}) AS JobStatus FROM User, Job WHERE Job.HirerID = User.ID AND User.ID = ${hirerID} AND Job.JobID = ${jobID}`;
-    console.log(queryString)
+
     connection.query(queryString, function (error, rows) {
-        if(error) {
+        if (error) {
             callback('error', 'System error')
         } else {
-            
-            let output = {'jobInfo' : {
-                'jobID': rows[0].JobID,
+
+            let output = {
+                'jobInfo': {
+                    'jobID': rows[0].JobID,
                     'jobName': rows[0].Name,
                     'jobWage': rows[0].Wage,
                     'date': rows[0].Date,
@@ -568,26 +652,27 @@ function fetchTaskerJobInfo(requestFields, callback) {
                     'hirerID': rows[0].HirerID,
                     'jobCategory': rows[0].JobCategory,
                     'jobStatusID': rows[0].JobStatusID == undefined ? 0 : rows[0].JobStatusID,
-                    'status': rows[0].JobStatus == undefined ? 0 : rows[0].JobStatus} ,
-                'userInfo' : {
-                    'userID' : rows[0].ID,
-                    'firstName' : rows[0].FirstName,
-                    'lastName' : rows[0].LastName,
-                    'emailID' : rows[0].EmailID,
-                    'profileImage' : rows[0].ProfileImage,
-                    'dob' : rows[0].Dob,
-                    'bio' : rows[0].Bio,
-                    'numberOfReviews' : rows[0].NumberOfReviews,
-                    'totalRating' : rows[0].TotalRating == undefined ? 0 : rows[0].TotalRating
-                }}
-                    
-            
-            
+                    'status': rows[0].JobStatus == undefined ? 0 : rows[0].JobStatus
+                },
+                'userInfo': {
+                    'userID': rows[0].ID,
+                    'firstName': rows[0].FirstName,
+                    'lastName': rows[0].LastName,
+                    'emailID': rows[0].EmailID,
+                    'profileImage': rows[0].ProfileImage,
+                    'dob': rows[0].Dob,
+                    'bio': rows[0].Bio,
+                    'numberOfReviews': rows[0].NumberOfReviews,
+                    'totalRating': rows[0].TotalRating == undefined ? 0 : rows[0].TotalRating
+                }
+            }
+
+
+
             callback('success', output);
         }
     })
 }
-
 
 function fetchUserReviewList(requestFields, callback) {
     let userID = requestFields.userID;
@@ -595,7 +680,7 @@ function fetchUserReviewList(requestFields, callback) {
     let queryString = `SELECT Review.*, User.ProfileImage AS ReviewerProfilePic, User.FirstName AS ReviewerName, Job.Name AS JobName FROM Review, User, Job WHERE Review.ReviewerID = User.ID AND Review.JobID = Job.JobID AND Review.UserID = ${userID} ORDER BY Date Desc`
 
     connection.query(queryString, function (error, rows) {
-        if(error) {
+        if (error) {
             callback('error', 'System error')
         } else {
             let reviewList = [];
@@ -611,6 +696,101 @@ function fetchUserReviewList(requestFields, callback) {
                 })
             }
             callback('success', reviewList);
+        }
+    })
+}
+
+function fetchReviewOfJob(requestFields, callback) {
+    let jobID = requestFields.jobID;
+    let reviewerID = requestFields.reviewerID;
+
+    let queryString = `SELECT Review.*, User.ID AS ReviewerID, User.FirstName, User.ProfileImage FROM Review, User WHERE Review.ReviewerID = User.ID AND JobID = ${jobID} AND ReviewerID = ${reviewerID} `;
+
+    connection.query(queryString, function (error, rows) {
+        if (error) {
+            callback('error', 'System error');
+        } else {
+            let reviewList = [];
+            for (i = 0; i < rows.length; i++) {
+                reviewList.push({
+                    'ID': rows[i].ID,
+                    'reviewerID': rows[i].ReviewerID,
+                    'reviewerProfilePic': rows[i].ProfileImage,
+                    'reviewerName': rows[i].FirstName,
+                    'rating': rows[i].Rating,
+                    'reviewDate': rows[i].Date,
+                    'review': rows[i].Review
+                })
+            }
+            callback('success', reviewList);
+        }
+    })
+}
+
+function addNewReview(requestFields, callback) {
+    let jobID = requestFields.jobID;
+    let userID = requestFields.userID;
+    let reviewerID = requestFields.reviewerID
+    let date = Date.now()
+    let rating = requestFields.rating
+    let review = requestFields.review
+
+    let queryString = `INSERT INTO Review (JobID, UserID, ReviewerID, Date, Rating, Review) VALUES (${jobID}, ${userID}, ${reviewerID}, ${date}, ${rating}, "${review}")`
+    console.log(queryString)
+    connection.query(queryString, function (error, result) {
+
+        if (error) {
+            callback("error", "Saving Review");
+        } else {
+            callback("success", "Review Added Successfully")
+        }
+
+    })
+}
+
+function getRequestedJobInfo(requestFields, callback) {
+    let userID = requestFields.hirerID;
+
+    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.TaskerID, User.FirstName, User.LastName, User.ProfileImage, User.Dob, User.Bio,
+            COUNT(Review.ReviewerID) AS TotalReviews, SUM(Rating) AS TotalRating 
+            FROM Job, User, JobStatus 
+            LEFT JOIN Review 
+            ON JobStatus.TaskerID = Review.UserID
+            WHERE Job.JobID = JobStatus.JobID AND 
+            JobStatus.TaskerID = User.ID AND 
+            Job.HirerID = ${userID} AND JobStatus.Status = 1 
+            GROUP BY Job.JobID, JobStatus.ID ORDER BY DateRequested`
+
+    connection.query(queryString, function (error, rows) {
+        if (error) {
+            callback('error', 'System error - in fecthing jobs')
+        } else {
+            let jobList = []
+            for (i = 0; i < rows.length; i++) {
+                jobList.push({
+                    'jobInfo': {
+                        'jobID': rows[i].JobID,
+                        'jobName': rows[i].Name,
+                        'jobWage': rows[i].Wage,
+                        'date': rows[i].Date,
+                        'description': rows[i].Description,
+                        'hirerID': rows[i].HirerID,
+                        'jobStatusID': rows[i].ID,
+                        'jobCategory': rows[i].JobCategory
+                    },
+                    'userInfo': {
+                        'userID': rows[i].TaskerID,
+                        'firstName': rows[i].FirstName,
+                        'lastName': rows[i].LastName,
+                        'dob': rows[i].Dob,
+                        'bio': rows[i].Bio,
+                        'profileImage': rows[i].ProfileImage,
+                        'numberOfReviews': rows[i].TotalReviews,
+                        'totalRating': rows[i].TotalRating == undefined ? 0 : rows[i].TotalRating
+                    }
+                })
+            }
+            callback('success', jobList)
         }
     })
 }
@@ -634,7 +814,11 @@ module.exports = {
     fetchTaskerAppliedJobList,
     fetchTaskerSavedJobList,
     fetchTaskerJobInfo,
-    fetchUserReviewList
+    fetchUserReviewList,
+    fetchHirerHistoryJobInfo,
+    fetchReviewOfJob,
+    addNewReview,
+    getRequestedJobInfo
 }
 
 function generateActivationRandomNumber() {
