@@ -27,9 +27,10 @@ const { request, response } = require('express');
 //      Setting up Node Server using ExpressJS
 // ***********************************************************
 const server = express();
+const port = process.env.PORT || 3000;
 
-server.listen(3000, () => {
-    console.log('Server is up on port 3000');
+server.listen(port, () => {
+    console.log(`Server is up on port ${port}`);
 });
 const pubDirPath = path.join(__dirname, 'public')
 server.use(express.static(pubDirPath));
