@@ -27,11 +27,19 @@ const { error } = require('console');
 // ***********************************************************
 
 
+// var connection = mysql.createConnection({
+//     host: 'localhost',
+//     port: '8889',
+//     user: 'root',
+//     password: 'root',
+//     database: 'Errandz'
+// });
+
 var connection = mysql.createConnection({
-    host: 'localhost',
-    port: '8889',
-    user: 'root',
-    password: 'root',
+    host: 'aws-db-errandz.c7gfmikod6bj.us-east-1.rds.amazonaws.com',
+    port: '3306',
+    user: 'admin',
+    password: 'g55Svp~0',
     database: 'Errandz'
 });
 
