@@ -431,8 +431,8 @@ function fetchHirerHistoryJobInfo(requestFields, callback) {
 
 function fetchUserInfo(userId, callback) {
 
-    let queryString = `SELECT User.ID, FirstName, LastName, EmailID, UserType, Dob, ProfileImage, Bio, (SELECT COUNT(ID) FROM Review WHERE UserID = ${userId}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${userId}) AS TotalRating FROM User WHERE ID = ${userId}`;
-
+    let queryString = `SELECT User.ID, FirstName, LastName, EmailID, UserType, Dob, ProfileImage, Bio, (SELECT COUNT(ID) FROM Review WHERE UserID = ${userId}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${userId}) AS TotalRating, Address.ID AS AddressID, Address.FullAddress FROM User, Address WHERE User.AddressID = Address.ID AND User.ID = ${userId}`;
+    console.log(queryString)
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System error');
@@ -447,7 +447,8 @@ function fetchUserInfo(userId, callback) {
                 'profileImage': rows[0].ProfileImage,
                 'bio': rows[0].Bio,
                 'numberOfReviews': rows[0].NumberOfReviews,
-                'totalRating': rows[0].TotalRating == undefined ? 0 : rows[0].TotalRating
+                'totalRating': rows[0].TotalRating == undefined ? 0 : rows[0].TotalRating,
+                'address': {'addressID': rows[0].AddressID, 'fullAddress': rows[0].FullAddress}
             })
         }
     })
@@ -458,16 +459,50 @@ function updateUserInfo(requestFields, callback) {
     let firstName = requestFields.firstName
     let lastName = requestFields.lastName
     let bio = requestFields.bio
+    let addressJson = JSON.parse(requestFields.address);
+    let fullAddress = addressJson.fullAddress;
+    let streetAddress = addressJson.streetAddress;
+    let city = addressJson.city;
+    let province = addressJson.province;
+    let postalCode = addressJson.postalCode;
+    let country = addressJson.country;
+    let latitude = addressJson.latitude;
+    let longitude = addressJson.longitude;
 
-    let queryString = `UPDATE User SET FirstName = '${firstName}', LastName = '${lastName}', Bio = '${bio}' WHERE ID = ${userID}`;
+    // console.log(`${fullAddress}, ${streetAddress}, ${city}, ${province}, ${postalCode}, ${country}, ${latitude}, ${longitude}`);
 
-    connection.query(queryString, function (error, rows) {
+    // let queryString = `UPDATE User SET FirstName = '${firstName}', LastName = '${lastName}', Bio = '${bio}' WHERE ID = ${userID}`;
+
+    // connection.query(queryString, function (error, rows) {
+    //     if (error) {
+    //         callback('error', 'System error');
+    //     } else {
+    //         callback('success', 'Profile updated successfully');
+    //     }
+    // })
+
+    let addressQueryString = `INSERT INTO Address (StreetAddress, City, Province, PostalCode, Country, FullAddress, Latitude, Longitude) VALUES ('${streetAddress}', '${city}', '${province}', '${postalCode}', '${country}', '${fullAddress}', '${latitude}', '${longitude}')`;
+    console.log(`Address insert query : ${addressQueryString}`);
+    connection.query(addressQueryString, function (error, rows) {
+
         if (error) {
-            callback('error', 'System error');
+            callback('error', 'System Error');
         } else {
-            callback('success', 'Profile updated successfully');
+
+            let addressId = rows.insertId;
+            // console.log(`Address ID : ${addressId}`);
+
+            let queryString = `UPDATE User SET FirstName = '${firstName}', LastName = '${lastName}', Bio = '${bio}', AddressID = '${addressId}' WHERE ID = ${userID}`;
+
+            connection.query(queryString, function (error, rows) {
+                if (error) {
+                    callback('error', 'System error');
+                } else {
+                    callback('success', 'Profile updated successfully');
+                }
+            })
         }
-    })
+    });
 }
 
 

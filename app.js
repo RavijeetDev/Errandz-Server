@@ -30,8 +30,9 @@ const server = express();
 const port = process.env.PORT || 3000;
 
 server.listen(port, () => {
-    console.log(`Server is up on port ${port}`);
+    console.log(`Server is Running on Port : ${port}`);
 });
+
 const pubDirPath = path.join(__dirname, 'public')
 server.use(express.static(pubDirPath));
 
@@ -199,6 +200,7 @@ server.post('/userInfo', (request, response) => {
 
 server.post('/uploadUserInfo', (request, response) => {
     let requestFields = request.fields;
+    console.log(requestFields);
     dbResult.updateUserInfo(requestFields, (status, fetchedData) => {
             response.send({ "result": { "status": status, "message": fetchedData } })
     })
