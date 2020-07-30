@@ -22,6 +22,7 @@ const { error } = require('console');
 
 const dbResult = require('./dbResult.js');
 const { request, response } = require('express');
+const notiServ = require('./noti.js');
 
 // ***********************************************************
 //      Setting up Node Server using ExpressJS
@@ -90,29 +91,21 @@ server.post('/createNewPassword', (request, response) => {
 server.post('/login', (request, response) => {
     let requestFields = request.fields
     dbResult.loginUser(requestFields, (status, fetchedData) => {
-        if (status == "error") {
-            response.send({ "result": { "status": status, "message": fetchedData } })
-        } else {
-            let userDataJson = {
-                "result": {
-                    "status": status,
-                    "message": "Login Successful"
-                },
-                "data": {
-                    "userID": fetchedData[0].ID,
-                    "firstName": fetchedData[0].FirstName,
-                    "lastName": fetchedData[0].LastName,
-                    "emailID": fetchedData[0].EmailId,
-                    "userType": fetchedData[0].UserType,
-                    "dob": fetchedData[0].Dob,
-                    "profileImage": fetchedData[0].ProfileImage,
-                    "bio": fetchedData[0].bio,
-                    "address": (fetchedData[0].address == null) ? "" : fetchedData[0].address
+        if (status == 'success') {
+            response.send(
+                {
+                    "result": {
+                        "status": status,
+                        "message": "success"
+                    },
+                    "data": fetchedData
                 }
-            }
-            response.send(userDataJson)
+            )
+        } else {
+            response.send({ "result": { "status": status, "message": fetchedData } })
         }
     })
+
 })
 
 server.post('/hirerHomeData', (request, response) => {
@@ -125,7 +118,7 @@ server.post('/hirerHomeData', (request, response) => {
                         "status": status,
                         "message": "success"
                     },
-                    "home_data": fetchedData
+                    "data": fetchedData
                 }
             )
         } else {
@@ -137,13 +130,32 @@ server.post('/hirerHomeData', (request, response) => {
 server.post('/postJob', (request, response) => {
     let requestFields = request.fields;
     dbResult.fetchPostJobResponse(requestFields, (status, fetchedData) => {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+        response.send({ "result": { "status": status, "message": fetchedData } })
     })
 })
 
 server.post('/hirerUpcomingJobList', (request, response) => {
     let requestFields = request.fields;
     dbResult.fetchHirerUpcomingJobList(requestFields, (status, fetchedData) => {
+        if (status == 'success') {
+            response.send(
+                {
+                    "result": {
+                        "status": status,
+                        "message": "success"
+                    },
+                    "data": fetchedData
+                }
+            )
+        } else {
+            response.send({ "result": { "status": status, "message": fetchedData } })
+        }
+    })
+})
+
+server.post('/hirerUpcomingJobDescription', (request, response) => {
+    let requestFields = request.fields;
+    dbResult.fetchHirerJobTaskerDescription(requestFields, (status, fetchedData) => {
         if (status == 'success') {
             response.send(
                 {
@@ -202,7 +214,7 @@ server.post('/uploadUserInfo', (request, response) => {
     let requestFields = request.fields;
     console.log(requestFields);
     dbResult.updateUserInfo(requestFields, (status, fetchedData) => {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+        response.send({ "result": { "status": status, "message": fetchedData } })
     })
 })
 
@@ -230,18 +242,18 @@ server.post('/taskerHomeData', (request, response) => {
 server.post('/updateJobStatus', (request, response) => {
     let requestFields = request.fields;
     dbResult.updateJobStatus(requestFields, (status, fetchedData) => {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+        response.send({ "result": { "status": status, "message": fetchedData } })
     })
 })
 
 server.post('/deleteJobStatus', (request, response) => {
     let requestFields = request.fields;
     dbResult.deleteJobFromJobStatusTable(requestFields, (status, fetchedData) => {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+        response.send({ "result": { "status": status, "message": fetchedData } })
     })
 })
 
-server.post('/applyForJob' , (request, response) => {
+server.post('/applyForJob', (request, response) => {
     let requestFields = request.fields
     dbResult.updateJobStatus(requestFields, (status, fetchedData) => {
         response.send({ "result": { "status": status, "message": fetchedData } })
@@ -290,6 +302,44 @@ server.post('/taskerSavedJobList', (request, response) => {
 server.post('/taskerJobInfo', (request, response) => {
     let requestFields = request.fields;
     dbResult.fetchTaskerJobInfo(requestFields, (status, fetchedData) => {
+        if (status == 'success') {
+            response.send(
+                {
+                    "result": {
+                        "status": status,
+                        "message": "success"
+                    },
+                    "data": fetchedData
+                }
+            )
+        } else {
+            response.send({ "result": { "status": status, "message": fetchedData } })
+        }
+    })
+})
+
+server.post('/taskerJobHistoryList', (request, response) => {
+    let requestFields = request.fields;
+    dbResult.fetchTaskerJobHistoryList(requestFields, (status, fetchedData) => {
+        if (status == 'success') {
+            response.send(
+                {
+                    "result": {
+                        "status": status,
+                        "message": "success"
+                    },
+                    "data": fetchedData
+                }
+            )
+        } else {
+            response.send({ "result": { "status": status, "message": fetchedData } })
+        }
+    })
+})
+
+server.post('/taskerHistoryJobInfo', (request, response) => {
+    let requestFields = request.fields;
+    dbResult.fetchTaskerHistoryJobInfo(requestFields, (status, fetchedData) => {
         if (status == 'success') {
             response.send(
                 {
@@ -363,7 +413,7 @@ server.post('/reviewsOfJob', (request, response) => {
     })
 })
 
-server.post('/postReview' , (request, response) => {
+server.post('/postReview', (request, response) => {
     let requestFields = request.fields
     dbResult.addNewReview(requestFields, (status, fetchedData) => {
         response.send({ "result": { "status": status, "message": fetchedData } })
@@ -387,6 +437,38 @@ server.post('/jobRequestList', (request, response) => {
             response.send({ "result": { "status": status, "message": fetchedData } })
         }
     })
+})
+
+server.post('/addAddress', (request, response) => {
+    let requestFields = request.fields
+    dbResult.addAddressRequest(requestFields, (status, fetchedData) => {
+        response.send({ "result": { "status": status, "message": fetchedData } })
+    })
+})
+
+server.post('/updateNotificationToken', (request, response) => {
+    let requestFields = request.fields
+    dbResult.updateNotificationToken(requestFields, (status, fetchedData) => {
+        response.send({ "result": { "status": status, "message": fetchedData } })
+    })
+})
+
+
+//-----  For Server Crash Test  -----//
+server.get('/crash', (request, response) => {
+    process.nextTick(() => {
+        throw new Error;
+    })
+})
+
+
+//-----  For Server Crash Test  -----//
+server.get('/notifyTest', (request, response) => {
+    /* 
+    notiServ.sendSampleMessage();
+    var registrationToken = "eoqxv1o5Qqa8aXSZPyeHCr:APA91bE4mLG_pZ6p5zg6VM2Um6UPj4JX51CavAXreTqLCq5XWNRObKFdGW4alkZzrCl_jL1sKm3-7BfFzThuNdOowSpywyUdHqEFFR1oVmBC0EPdtz6CRulRfgDwiNrJANcfWdP3Ikzh";
+    notiServ.sendNotification(registrationToken, "ERRANDZ APP", "This is sample notification for Errandz App");
+     */
 })
 
 

@@ -5,7 +5,10 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "runNM": "nodemon app.js"
+    "runNM": "nodemon app.js",
+    "runForever": "forever start app.js",
+    "runPM": "pm2 start app.js --watch",
+    "startServer": "forever start -c nodemon app.js"
   },
   "repository": {
     "type": "git",
@@ -20,7 +23,11 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-formidable": "^1.2.0",
+    "firebase-admin": "^9.0.0",
+    "forever": "^3.0.0",
     "mysql": "^2.18.1",
-    "nodemon": "^2.0.4"
+    "node-pushnotifications": "^1.4.0",
+    "nodemon": "^2.0.4",
+    "pm2": "^4.4.0"
   }
 }
