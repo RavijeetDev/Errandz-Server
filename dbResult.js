@@ -71,41 +71,18 @@ function addSignedUpUser(signUpFields, callback) {
         } else {
 
             let queryString = `INSERT INTO User (FirstName, LastName, EmailID, UserType, Dob, LoginType, UID, ProfileImage, Active) VALUES ('${firstName}', "${lastName}", "${emailID}", ${userType}, ${dob}, ${loginType}, "${uid}", "${profileImage}", 1)`;
-            console.log(queryString)
+
             connection.query(queryString, function (error, result) {
 
                 if (error) {
                     console.log("Issue in inserting data of User")
                     callback("error", "System error");
                 } else {
-                    addActivationCodeForUserVerification(signUpFields.emailID)
+                    // addActivationCodeForUserVerification(signUpFields.emailID)
                     callback("success", "Email ID registered successfully.")
                 }
 
             })
-        }
-    })
-}
-
-
-function checkEmailVerification(requestFields, callback) {
-
-    let query = `SELECT ID FROM UserActivation WHERE EmailID = "${requestFields.emailID}" AND ActivationCode = ${requestFields.activationCode} AND ActivationType = 1`
-    connection.query(query, function (error, rows, fields) {
-        if (error) {
-            callback("error", "There is some system issue")
-        } else {
-            if (rows.length > 0) {
-                deleteActivationCodeEntry(requestFields.emailID, 1);
-                activateUser(requestFields.emailID);
-                callback("success", "Email ID verified successfully")
-            } else {
-
-                checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-                    callback("error", message)
-                })
-
-            }
         }
     })
 }
@@ -125,65 +102,86 @@ function checkIfEmailIDExist(emailID, callback) {
 }
 
 
+// function checkEmailVerification(requestFields, callback) {
 
-function resendEmailVerificationCode(requestFields, callback) {
-    let activationCode = generateActivationRandomNumber()
-    checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-        if (errorCode == 501 || errorCode == 502) {
-            callback(message)
-        } else {
-            let queryString = `UPDATE UserActivation SET ActivationCode = ${activationCode} WHERE EmailID = "${requestFields.emailID}"`
-            connection.query(queryString, function (error, result) {
-                if (error) {
-                    callback("System Error")
-                } else {
-                    callback("Activation code is send successfully")
-                }
-            })
-        }
-    })
-}
+//     let query = `SELECT ID FROM UserActivation WHERE EmailID = "${requestFields.emailID}" AND ActivationCode = ${requestFields.activationCode} AND ActivationType = 1`
+//     connection.query(query, function (error, rows, fields) {
+//         if (error) {
+//             callback("error", "There is some system issue")
+//         } else {
+//             if (rows.length > 0) {
+//                 deleteActivationCodeEntry(requestFields.emailID, 1);
+//                 activateUser(requestFields.emailID);
+//                 callback("success", "Email ID verified successfully")
+//             } else {
+
+//                 checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
+//                     callback("error", message)
+//                 })
+
+//             }
+//         }
+//     })
+// }
+
+// function resendEmailVerificationCode(requestFields, callback) {
+//     let activationCode = generateActivationRandomNumber()
+//     checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
+//         if (errorCode == 501 || errorCode == 502) {
+//             callback(message)
+//         } else {
+//             let queryString = `UPDATE UserActivation SET ActivationCode = ${activationCode} WHERE EmailID = "${requestFields.emailID}"`
+//             connection.query(queryString, function (error, result) {
+//                 if (error) {
+//                     callback("System Error")
+//                 } else {
+//                     callback("Activation code is send successfully")
+//                 }
+//             })
+//         }
+//     })
+// }
 
 
-function createActivationCodeForNewPassword(requestFields, callback) {
-    checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-        if (errorCode == 501 || errorCode == 502) {
-            callback("error", message)
-        } else {
-            let activationCode = generateActivationRandomNumber()
-            let queryString = `INSERT INTO UserActivation (EmailID, ActivationType, ActivationCode) VALUES ("${requestFields.emailID}", 2, ${activationCode})`
-            connection.query(queryString, function (error, result) {
-                if (error) {
-                    callback("error", "System error")
-                } else {
-                    callback("success", "Activation Code is send successfully")
-                }
-            });
-        }
-    })
-}
+// function createActivationCodeForNewPassword(requestFields, callback) {
+//     checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
+//         if (errorCode == 501 || errorCode == 502) {
+//             callback("error", message)
+//         } else {
+//             let activationCode = generateActivationRandomNumber()
+//             let queryString = `INSERT INTO UserActivation (EmailID, ActivationType, ActivationCode) VALUES ("${requestFields.emailID}", 2, ${activationCode})`
+//             connection.query(queryString, function (error, result) {
+//                 if (error) {
+//                     callback("error", "System error")
+//                 } else {
+//                     callback("success", "Activation Code is send successfully")
+//                 }
+//             });
+//         }
+//     })
+// }
 
 
-function createNewPassword(requestFields, callback) {
-    checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-        if (errorCode == 501 || errorCode == 502) {
-            callback("error", message)
-        } else {
-            let queryString = `SELECT ID FROM UserActivation WHERE EmailID = "${requestFields.emailID}" AND ActivationCode = ${requestFields.activationCode} AND ActivationType = 2`
-            connection.query(queryString, function (error, result) {
-                if (error) {
-                    callback("error", "System error")
-                } else if (result.length > 0) {
-                    updateNewPassword(requestFields.emailID, requestFields.password, requestFields.activationCode, 2)
-                    deleteActivationCodeEntry(requestFields.emailID, 2)
-                    callback("Password changed successfully")
-                } else {
-                    callback("error", "Invalid Activation Code")
-                }
-            })
-        }
-    });
-}
+// function createNewPassword(requestFields, callback) {
+//     checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
+//         if (errorCode == 501 || errorCode == 502) {
+//             callback("error", message)
+//         } else {
+//             let queryString = `SELECT ID FROM UserActivation WHERE EmailID = "${requestFields.emailID}" AND ActivationCode = ${requestFields.activationCode} AND ActivationType = 2`
+//             connection.query(queryString, function (error, result) {
+//                 if (error) {
+//                     callback("error", "System error")
+//                 } else if (result.length > 0) {
+//                     updateNewPassword(requestFields.emailID, requestFields.password, requestFields.activationCode, 2)
+//                     deleteActivationCodeEntry(requestFields.emailID, 2)
+//                     callback("Password changed successfully")
+//                 } else {
+//                     callback("error", "Invalid Activation Code")
+//                 }
+//             })
+//         }
+//     });
+// }
 
 
 function loginUser(requestFields, callback) {
@@ -192,118 +190,119 @@ function loginUser(requestFields, callback) {
     //         callback("error", message)
     //     } else {
 
-            let emailID = requestFields.emailID
-            let uID = requestFields.uID;
-            let loginType = requestFields.loginType;
-            let pushToken = requestFields.token;
+    let emailID = requestFields.emailID
+    let uID = requestFields.uid;
+    let loginType = requestFields.loginType;
+    let pushToken = requestFields.token;
 
-            let queryString = `SELECT User.*, User.ID AS UserID , Address.* FROM User LEFT JOIN Address ON User.AddressID = Address.ID WHERE EmailID = "${emailID}" AND UID = "${uID}" AND LoginType = ${loginType}`
-            connection.query(queryString, function (error, fetchedData) {
-                if (error) {
-                    callback("error", "System Error")
-                } else if (fetchedData.length == 0) {
-                    callback("error", "Email ID does not exist ")
+    let queryString = `SELECT User.*, User.ID AS UserID , Address.* FROM User LEFT JOIN Address ON User.AddressID = Address.ID WHERE EmailID = "${emailID}" AND UID = "${uID}" AND LoginType = ${loginType}`
+    console.log(queryString)
+    connection.query(queryString, function (error, fetchedData) {
+        if (error) {
+            callback("error", "System Error")
+        } else if (fetchedData.length == 0) {
+            callback("error", "Email ID does not exist ")
+        } else {
+            let output = {
+                "userID": fetchedData[0].UserID,
+                "firstName": fetchedData[0].FirstName,
+                "lastName": fetchedData[0].LastName,
+                "emailID": fetchedData[0].EmailId,
+                "userType": fetchedData[0].UserType,
+                "dob": fetchedData[0].Dob,
+                "profileImage": fetchedData[0].ProfileImage,
+                "bio": fetchedData[0].Bio,
+                "address": {
+                    "addressID": fetchedData[0].ID,
+                    "streetAddress": fetchedData[0].StreetAddress,
+                    "city": fetchedData[0].City,
+                    "province": fetchedData[0].Province,
+                    "postalCode": fetchedData[0].PostalCode,
+                    "country": fetchedData[0].Country,
+                    "latitude": fetchedData[0].Latitude,
+                    "longitude": fetchedData[0].Longitude,
+                    "fullAddress": fetchedData[0].FullAddress
+                }
+            }
+            let fields = {
+                userID: fetchedData[0].UserID,
+                token: pushToken
+            }
+            updateNotificationToken(fields, (status, message) => {
+                if (status === "error") {
+                    console.log(message);
                 } else {
-                    let output = {
-                        "userID": fetchedData[0].UserID,
-                        "firstName": fetchedData[0].FirstName,
-                        "lastName": fetchedData[0].LastName,
-                        "emailID": fetchedData[0].EmailId,
-                        "userType": fetchedData[0].UserType,
-                        "dob": fetchedData[0].Dob,
-                        "profileImage": fetchedData[0].ProfileImage,
-                        "bio": fetchedData[0].bio,
-                        "address": {
-                            "addressID": fetchedData[0].ID,
-                            "streetAddress": fetchedData[0].StreetAddress,
-                            "city": fetchedData[0].City,
-                            "province": fetchedData[0].Province,
-                            "postalCode": fetchedData[0].PostalCode,
-                            "country": fetchedData[0].Country,
-                            "latitude": fetchedData[0].Latitude,
-                            "longitude": fetchedData[0].Longitude,
-                            "fullAddress": fetchedData[0].FullAddress
-                        }
-                    }
-                    let fields = {
-                        userID: fetchedData[0].UserID,
-                        token: pushToken
-                    }
-                    updateNotificationToken(fields, (status, message) => {
-                        if (status === "error") {
-                            console.log(message);
-                        } else {
-                            console.log(message);
-                        }
-                    })
-                    callback('success', output);
+                    console.log(message);
                 }
             })
-        // }
+            callback('success', output);
+        }
+    })
+    // }
     // })
 }
 
 
-function addActivationCodeForUserVerification(emailID) {
-    let activationCode = generateActivationRandomNumber();
-    let queryString = `INSERT INTO UserActivation (EmailID, ActivationType, ActivationCode) VALUES ("${emailID}", 1, ${activationCode})`
-    connection.query(queryString, function (error, result) {
-        if (error) console.log("System error -> addActivationCodeForUserVerification")
-        else console.log(`Activation code added for ${emailID}`)
-    })
-}
+// function addActivationCodeForUserVerification(emailID) {
+//     let activationCode = generateActivationRandomNumber();
+//     let queryString = `INSERT INTO UserActivation (EmailID, ActivationType, ActivationCode) VALUES ("${emailID}", 1, ${activationCode})`
+//     connection.query(queryString, function (error, result) {
+//         if (error) console.log("System error -> addActivationCodeForUserVerification")
+//         else console.log(`Activation code added for ${emailID}`)
+//     })
+// }
 
 
-function activateUser(emailID) {
-    let queryString = `UPDATE User SET Active = 1 WHERE emailID = "${emailID}"`
-    connection.query(queryString, function (error, rows) {
-        if (error) {
-            console.log("Unable to activate user")
-        } else {
-            console.log("User Activated successfully")
-        }
-    })
-}
+// function activateUser(emailID) {
+//     let queryString = `UPDATE User SET Active = 1 WHERE emailID = "${emailID}"`
+//     connection.query(queryString, function (error, rows) {
+//         if (error) {
+//             console.log("Unable to activate user")
+//         } else {
+//             console.log("User Activated successfully")
+//         }
+//     })
+// }
 
 
-function updateNewPassword(emailID, password) {
-    let queryString = `UPDATE User SET Password = "${password}" WHERE EmailID = "${emailID}"`
-    connection.query(queryString, function (error, result) {
-        if (error) {
-            console.log("System error")
-        } else {
-            console.log("Password Updated Successfully")
-        }
-    })
-}
+// function updateNewPassword(emailID, password) {
+//     let queryString = `UPDATE User SET Password = "${password}" WHERE EmailID = "${emailID}"`
+//     connection.query(queryString, function (error, result) {
+//         if (error) {
+//             console.log("System error")
+//         } else {
+//             console.log("Password Updated Successfully")
+//         }
+//     })
+// }
 
 
-function checkUserActiveStatus(emailID, callback) {
-    let queryString = `SELECT Active FROM User WHERE EmailID = "${emailID}"`
-    connection.query(queryString, function (error, result) {
-        if (error) {
-            callback(500, "System error")
-        } else if (result.length == 0) {
-            callback(501, "Email ID is not registered")
-        } else if (result[0].Active == 1) {
-            callback(502, "Email ID is already verified")
-        } else {
-            callback(503, "Invalid activation code")
-        }
-    })
-}
+// function checkUserActiveStatus(emailID, callback) {
+//     let queryString = `SELECT Active FROM User WHERE EmailID = "${emailID}"`
+//     connection.query(queryString, function (error, result) {
+//         if (error) {
+//             callback(500, "System error")
+//         } else if (result.length == 0) {
+//             callback(501, "Email ID is not registered")
+//         } else if (result[0].Active == 1) {
+//             callback(502, "Email ID is already verified")
+//         } else {
+//             callback(503, "Invalid activation code")
+//         }
+//     })
+// }
 
 
-function deleteActivationCodeEntry(emailID, activationType) {
-    let queryString = `DELETE FROM UserActivation WHERE EmailID = "${emailID}" AND ActivationType = ${activationType}`
-    connection.query(queryString, function (error, rows) {
-        if (error) {
-            console.log("Deleting email verification code - System Error")
-        } else {
-            console.log("Deleted Successfully")
-        }
-    })
-}
+// function deleteActivationCodeEntry(emailID, activationType) {
+//     let queryString = `DELETE FROM UserActivation WHERE EmailID = "${emailID}" AND ActivationType = ${activationType}`
+//     connection.query(queryString, function (error, rows) {
+//         if (error) {
+//             console.log("Deleting email verification code - System Error")
+//         } else {
+//             console.log("Deleted Successfully")
+//         }
+//     })
+// }
 
 
 function fetchHirerHomeData(requestFields, callback) {
@@ -323,7 +322,7 @@ function fetchHirerHomeData(requestFields, callback) {
             JobStatus.TaskerID = User.ID AND 
             Job.HirerID = ${userID} AND JobStatus.Status = 1 
             GROUP BY Job.JobID, JobStatus.ID ORDER BY DateRequested LIMIT 10`
-
+            console.log(queryString)
             connection.query(queryString, function (error, rows) {
                 if (error) {
                     callback('error', 'System error - in fecthing jobs')
@@ -689,7 +688,7 @@ function fetchTaskerHomeData(requestFields, callback) {
 function getTaskerApprovedJobList(userID, callback) {
     // SELECT Job.JobID, Name, Date, JobCategory,  From Job, JobRequest WHERE Job.JobID = JobRequest.JobID AND WorkerID = 14 AND STATUS = 1
     let queryString = `SELECT JobStatus.ID As JobStatusID, Job.JobID, Name, JobCategory, Job.HirerID, Date, Description, Wage, Status From Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND TaskerID = ${userID} AND Status IN (2, 5)`;
-    
+
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System error')
@@ -745,8 +744,8 @@ function updateJobStatus(requestFields, callback) {
         } else {
             if (status == 1) {
                 fetchDataForNotification(hirerID, taskerID, "Job Request", "sent you a new job request");
-            } else if(status == 2) {
-                fetchDataForNotification(taskerID, hirerID, "Request Accepted", "Your Job Request is accepted");
+            } else if (status == 2) {
+                fetchDataForNotification(taskerID, hirerID, "Request Accepted", "accepted your job request");
             }
             callback('success', 'Saved successfully');
         }
@@ -888,7 +887,7 @@ function fetchTaskerJobHistoryList(requestFields, callback) {
     let currentTimestamp = Date.now()
 
     let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status = 6 AND TaskerID = ${taskerID} ORDER BY Date DESC`;
-    
+
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System Error')
@@ -1108,14 +1107,14 @@ function updateNotificationToken(requestFields, callback) {
 
 
 function fetchDataForNotification(recieverID, senderID, notificationTitle, notificationMessageSubString) {
-    let tokenQueryString = `SELECT Token FROM User WHERE ID = ${recieverID}`;
+    let tokenQueryString = `SELECT PushToken FROM User WHERE ID = ${recieverID}`;
 
     connection.query(tokenQueryString, function (error, result) {
         if (error) {
             console.log("Token Not Retrieved");
         } else {
 
-            let token = result[0].Token;
+            let token = result[0].PushToken;
             let userQueryString = `SELECT FirstName, LastName FROM User WHERE ID = ${senderID}`;
             connection.query(userQueryString, function (error, result) {
                 if (error) {
@@ -1125,7 +1124,7 @@ function fetchDataForNotification(recieverID, senderID, notificationTitle, notif
                     notificationServer.sendNotification(token, notificationTitle, `${name} ${notificationMessageSubString}`);
                 }
 
-            })
+            }) 
         }
 
     })
@@ -1134,10 +1133,10 @@ function fetchDataForNotification(recieverID, senderID, notificationTitle, notif
 
 module.exports = {
     addSignedUpUser,
-    checkEmailVerification,
-    resendEmailVerificationCode,
-    createActivationCodeForNewPassword,
-    createNewPassword,
+    // checkEmailVerification,
+    // resendEmailVerificationCode,
+    // createActivationCodeForNewPassword,
+    // createNewPassword,
     loginUser,
     fetchPostJobResponse,
     fetchHirerHomeData,

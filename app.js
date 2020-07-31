@@ -21,8 +21,10 @@ const { error } = require('console');
 // ***********************************************************
 
 const dbResult = require('./dbResult.js');
+const authValidation = require('./authValidation.js')
 const { request, response } = require('express');
 const notiServ = require('./noti.js');
+const { checkTokenValidation } = require('./authValidation.js');
 
 // ***********************************************************
 //      Setting up Node Server using ExpressJS
@@ -53,59 +55,43 @@ server.post('/signup', (request, response) => {
 
     let signUpFields = request.fields;
     dbResult.addSignedUpUser(signUpFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+         
+            sendResponseWithoutData(response, status, fetchedData);
+ 
     });
 
 });
 
-server.post('/emailVerification', (request, response) => {
-
-    let requestFields = request.fields;
-    dbResult.checkEmailVerification(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
-    })
-
-});
-
-server.post('/emailActivationCode', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.resendEmailVerificationCode(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
-    })
-});
-
-server.post('/passwordActivationCode', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.createActivationCodeForNewPassword(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
-    })
-})
-
-server.post('/createNewPassword', (request, response) => {
-    let requestFields = request.fields
-    dbResult.createNewPassword(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
-    })
-})
 
 server.post('/login', (request, response) => {
-    let requestFields = request.fields
-    dbResult.loginUser(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields
+            dbResult.loginUser(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 
+
+})
+
+server.post('/addAddress', (request, response) => {
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields
+            dbResult.addAddressRequest(requestFields, (status, fetchedData) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
+    })
 })
 
 server.post('/hirerHomeData', (request, response) => {
@@ -439,12 +425,7 @@ server.post('/jobRequestList', (request, response) => {
     })
 })
 
-server.post('/addAddress', (request, response) => {
-    let requestFields = request.fields
-    dbResult.addAddressRequest(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
-    })
-})
+
 
 server.post('/updateNotificationToken', (request, response) => {
     let requestFields = request.fields
@@ -452,6 +433,27 @@ server.post('/updateNotificationToken', (request, response) => {
         response.send({ "result": { "status": status, "message": fetchedData } })
     })
 })
+
+
+function sendResponseWithoutData(response, status, message) {
+    response.send({ "result": { "status": status, "message": message } })
+}
+
+function sendResponseWithData(response, status, output) {
+    if (status == 'success') {
+        response.send(
+            {
+                "result": {
+                    "status": status,
+                    "message": "success"
+                },
+                "data": output
+            }
+        )
+    } else {
+        sendResponseWithoutData(response, status, output)
+    }
+}
 
 
 //-----  For Server Crash Test  -----//
@@ -470,5 +472,36 @@ server.get('/notifyTest', (request, response) => {
     notiServ.sendNotification(registrationToken, "ERRANDZ APP", "This is sample notification for Errandz App");
      */
 })
+
+// server.post('/emailVerification', (request, response) => {
+
+//     let requestFields = request.fields;
+//     dbResult.checkEmailVerification(requestFields, (status, fetchedData) => {
+//         response.send({ "result": { "status": status, "message": fetchedData } })
+//     })
+
+// });
+
+// server.post('/emailActivationCode', (request, response) => {
+//     let requestFields = request.fields;
+//     dbResult.resendEmailVerificationCode(requestFields, (status, fetchedData) => {
+//         response.send({ "result": { "status": status, "message": fetchedData } })
+//     })
+// });
+
+// server.post('/passwordActivationCode', (request, response) => {
+//     let requestFields = request.fields;
+//     dbResult.createActivationCodeForNewPassword(requestFields, (status, fetchedData) => {
+//         response.send({ "result": { "status": status, "message": fetchedData } })
+//     })
+// })
+
+// server.post('/createNewPassword', (request, response) => {
+//     let requestFields = request.fields
+//     dbResult.createNewPassword(requestFields, (status, fetchedData) => {
+//         response.send({ "result": { "status": status, "message": fetchedData } })
+//     })
+// })
+
 
 
