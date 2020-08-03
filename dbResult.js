@@ -65,137 +65,35 @@ function addSignedUpUser(signUpFields, callback) {
     let uid = signUpFields.uid
     let profileImage = signUpFields.profileImage
 
-    checkIfEmailIDExist(emailID, (status, message) => {
-        if (status) {
-            callback("error", message)
-        } else {
+    let queryString = `INSERT INTO User 
+    (FirstName, LastName, EmailID, UserType, Dob, LoginType, UID, ProfileImage, Active) 
+    VALUES ('${firstName}', "${lastName}", "${emailID}", ${userType}, ${dob}, ${loginType}, "${uid}", "${profileImage}", 1)`;
 
-            let queryString = `INSERT INTO User (FirstName, LastName, EmailID, UserType, Dob, LoginType, UID, ProfileImage, Active) VALUES ('${firstName}', "${lastName}", "${emailID}", ${userType}, ${dob}, ${loginType}, "${uid}", "${profileImage}", 1)`;
+    connection.query(queryString, function (error, result) {
 
-            connection.query(queryString, function (error, result) {
-
-                if (error) {
-                    console.log("Issue in inserting data of User")
-                    callback("error", "System error");
-                } else {
-                    // addActivationCodeForUserVerification(signUpFields.emailID)
-                    callback("success", "Email ID registered successfully.")
-                }
-
-            })
-        }
-    })
-}
-
-function checkIfEmailIDExist(emailID, callback) {
-    let emailQuery = `SELECT ID FROM User WHERE EmailID = "${emailID}"`
-    connection.query(emailQuery, function (error, rows) {
         if (error) {
-            console.log("Error in fetching data from User table -> checkIfEmailIDExist")
-            callback(true, "System error");
-        } else if (rows.length > 0) {
-            callback(true, "Email ID already registered")
+            console.log("Issue in inserting data of User")
+            callback("error", "System error");
         } else {
-            callback(false, "")
+            callback("success", "Email ID registered successfully.")
         }
+
     })
+
 }
-
-
-// function checkEmailVerification(requestFields, callback) {
-
-//     let query = `SELECT ID FROM UserActivation WHERE EmailID = "${requestFields.emailID}" AND ActivationCode = ${requestFields.activationCode} AND ActivationType = 1`
-//     connection.query(query, function (error, rows, fields) {
-//         if (error) {
-//             callback("error", "There is some system issue")
-//         } else {
-//             if (rows.length > 0) {
-//                 deleteActivationCodeEntry(requestFields.emailID, 1);
-//                 activateUser(requestFields.emailID);
-//                 callback("success", "Email ID verified successfully")
-//             } else {
-
-//                 checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-//                     callback("error", message)
-//                 })
-
-//             }
-//         }
-//     })
-// }
-
-// function resendEmailVerificationCode(requestFields, callback) {
-//     let activationCode = generateActivationRandomNumber()
-//     checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-//         if (errorCode == 501 || errorCode == 502) {
-//             callback(message)
-//         } else {
-//             let queryString = `UPDATE UserActivation SET ActivationCode = ${activationCode} WHERE EmailID = "${requestFields.emailID}"`
-//             connection.query(queryString, function (error, result) {
-//                 if (error) {
-//                     callback("System Error")
-//                 } else {
-//                     callback("Activation code is send successfully")
-//                 }
-//             })
-//         }
-//     })
-// }
-
-
-// function createActivationCodeForNewPassword(requestFields, callback) {
-//     checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-//         if (errorCode == 501 || errorCode == 502) {
-//             callback("error", message)
-//         } else {
-//             let activationCode = generateActivationRandomNumber()
-//             let queryString = `INSERT INTO UserActivation (EmailID, ActivationType, ActivationCode) VALUES ("${requestFields.emailID}", 2, ${activationCode})`
-//             connection.query(queryString, function (error, result) {
-//                 if (error) {
-//                     callback("error", "System error")
-//                 } else {
-//                     callback("success", "Activation Code is send successfully")
-//                 }
-//             });
-//         }
-//     })
-// }
-
-
-// function createNewPassword(requestFields, callback) {
-//     checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-//         if (errorCode == 501 || errorCode == 502) {
-//             callback("error", message)
-//         } else {
-//             let queryString = `SELECT ID FROM UserActivation WHERE EmailID = "${requestFields.emailID}" AND ActivationCode = ${requestFields.activationCode} AND ActivationType = 2`
-//             connection.query(queryString, function (error, result) {
-//                 if (error) {
-//                     callback("error", "System error")
-//                 } else if (result.length > 0) {
-//                     updateNewPassword(requestFields.emailID, requestFields.password, requestFields.activationCode, 2)
-//                     deleteActivationCodeEntry(requestFields.emailID, 2)
-//                     callback("Password changed successfully")
-//                 } else {
-//                     callback("error", "Invalid Activation Code")
-//                 }
-//             })
-//         }
-//     });
-// }
-
 
 function loginUser(requestFields, callback) {
-    // checkUserActiveStatus(requestFields.emailID, (errorCode, message) => {
-    //     if (errorCode == 501 || errorCode == 500) {
-    //         callback("error", message)
-    //     } else {
 
     let emailID = requestFields.emailID
     let uID = requestFields.uid;
     let loginType = requestFields.loginType;
     let pushToken = requestFields.token;
 
-    let queryString = `SELECT User.*, User.ID AS UserID , Address.* FROM User LEFT JOIN Address ON User.AddressID = Address.ID WHERE EmailID = "${emailID}" AND UID = "${uID}" AND LoginType = ${loginType}`
+    let queryString = `SELECT User.*, User.ID AS UserID , Address.* 
+    FROM User LEFT JOIN Address 
+    ON User.AddressID = Address.ID 
+    WHERE EmailID = "${emailID}" AND UID = "${uID}" AND LoginType = ${loginType}`;
+
     console.log(queryString)
     connection.query(queryString, function (error, fetchedData) {
         if (error) {
@@ -238,71 +136,7 @@ function loginUser(requestFields, callback) {
             callback('success', output);
         }
     })
-    // }
-    // })
 }
-
-
-// function addActivationCodeForUserVerification(emailID) {
-//     let activationCode = generateActivationRandomNumber();
-//     let queryString = `INSERT INTO UserActivation (EmailID, ActivationType, ActivationCode) VALUES ("${emailID}", 1, ${activationCode})`
-//     connection.query(queryString, function (error, result) {
-//         if (error) console.log("System error -> addActivationCodeForUserVerification")
-//         else console.log(`Activation code added for ${emailID}`)
-//     })
-// }
-
-
-// function activateUser(emailID) {
-//     let queryString = `UPDATE User SET Active = 1 WHERE emailID = "${emailID}"`
-//     connection.query(queryString, function (error, rows) {
-//         if (error) {
-//             console.log("Unable to activate user")
-//         } else {
-//             console.log("User Activated successfully")
-//         }
-//     })
-// }
-
-
-// function updateNewPassword(emailID, password) {
-//     let queryString = `UPDATE User SET Password = "${password}" WHERE EmailID = "${emailID}"`
-//     connection.query(queryString, function (error, result) {
-//         if (error) {
-//             console.log("System error")
-//         } else {
-//             console.log("Password Updated Successfully")
-//         }
-//     })
-// }
-
-
-// function checkUserActiveStatus(emailID, callback) {
-//     let queryString = `SELECT Active FROM User WHERE EmailID = "${emailID}"`
-//     connection.query(queryString, function (error, result) {
-//         if (error) {
-//             callback(500, "System error")
-//         } else if (result.length == 0) {
-//             callback(501, "Email ID is not registered")
-//         } else if (result[0].Active == 1) {
-//             callback(502, "Email ID is already verified")
-//         } else {
-//             callback(503, "Invalid activation code")
-//         }
-//     })
-// }
-
-
-// function deleteActivationCodeEntry(emailID, activationType) {
-//     let queryString = `DELETE FROM UserActivation WHERE EmailID = "${emailID}" AND ActivationType = ${activationType}`
-//     connection.query(queryString, function (error, rows) {
-//         if (error) {
-//             console.log("Deleting email verification code - System Error")
-//         } else {
-//             console.log("Deleted Successfully")
-//         }
-//     })
-// }
 
 
 function fetchHirerHomeData(requestFields, callback) {
@@ -323,6 +157,7 @@ function fetchHirerHomeData(requestFields, callback) {
             Job.HirerID = ${userID} AND JobStatus.Status = 1 
             GROUP BY Job.JobID, JobStatus.ID ORDER BY DateRequested LIMIT 10`
             console.log(queryString)
+
             connection.query(queryString, function (error, rows) {
                 if (error) {
                     callback('error', 'System error - in fecthing jobs')
@@ -365,6 +200,7 @@ function fetchHirerHomeData(requestFields, callback) {
 
 
 function getNumberOfHirerPostedJobs(userID, callback) {
+
     let queryString = `SELECT COUNT(JobID) AS NumberOfJobs FROM Job WHERE HirerID = ${userID}`;
     console.log(queryString)
     connection.query(queryString, function (error, rows) {
@@ -372,7 +208,6 @@ function getNumberOfHirerPostedJobs(userID, callback) {
             console.log("Number of Client Jobs - System Error")
             callback('error', 'System error')
         } else {
-            // console.log(rows[0]);
             callback('success', rows[0].NumberOfJobs)
         }
     })
@@ -387,7 +222,8 @@ function fetchPostJobResponse(requestFields, callback) {
     let jobCategory = requestFields.jobCategory;
     let hirerID = requestFields.hirerID;
 
-    let queryString = `INSERT INTO Job (Name, Wage, Date, Description, JobCategory, HirerID) VALUES ("${jobName}", ${jobWage}, ${date}, "${jobDescription}", ${jobCategory}, ${hirerID})`;
+    let queryString = `INSERT INTO Job (Name, Wage, Date, Description, JobCategory, HirerID) 
+    VALUES ("${jobName}", ${jobWage}, ${date}, "${jobDescription}", ${jobCategory}, ${hirerID})`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -429,7 +265,9 @@ function fetchHirerUpcomingJobList(requestFields, callback) {
 function fetchHirerJobTaskerDescription(requestFields, callback) {
     let jobID = requestFields.jobID;
 
-    let queryString = `SELECT JobStatus.ID AS JobStatusID, Status, User.* FROM JobStatus, User WHERE JobStatus.TaskerID = User.ID AND JobID = ${jobID} AND Status IN (2, 5)`;
+    let queryString = `SELECT JobStatus.ID AS JobStatusID, Status, User.* FROM JobStatus, User 
+    WHERE JobStatus.TaskerID = User.ID 
+    AND JobID = ${jobID} AND Status IN (2, 5)`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -458,10 +296,15 @@ function fetchHirerJobTaskerDescription(requestFields, callback) {
 
 
 function fetchHirerJobHistoryList(requestFields, callback) {
-    let hirerID = requestFields.hirerID;
-    let currentTimestamp = Date.now()
 
-    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status, JobStatus.TaskerID FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status = 6 AND HirerID = ${hirerID} ORDER BY Date DESC`;
+    let hirerID = requestFields.hirerID;
+
+    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status, JobStatus.TaskerID 
+    FROM Job, JobStatus 
+    WHERE Job.JobID = JobStatus.JobID 
+    AND Status = 6 AND HirerID = ${hirerID} 
+    ORDER BY Date DESC`;
+
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System Error')
@@ -487,11 +330,20 @@ function fetchHirerJobHistoryList(requestFields, callback) {
 
 
 function fetchHirerHistoryJobInfo(requestFields, callback) {
+
     let jobID = requestFields.jobID;
     let hirerID = requestFields.hirerID;
     let taskerID = requestFields.taskerID;
 
-    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status, User.ID As UserID, User.FirstName, User.LastName, User.ProfileImage, User.Dob, User.Bio, (SELECT COUNT(ID) FROM Review WHERE UserID = ${taskerID}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${taskerID}) AS TotalRating FROM Job, JobStatus, User WHERE Job.JobID = JobStatus.JobID AND User.ID = JobStatus.TaskerID AND Job.JobID = ${jobID} AND Status = 6 AND JobStatus.TaskerID = ${taskerID}`;
+    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status, 
+    User.ID As UserID, User.FirstName, User.LastName, User.ProfileImage, User.Dob, User.Bio, 
+    (SELECT COUNT(ID) FROM Review WHERE UserID = ${taskerID}) AS NumberOfReviews, 
+    (SELECT SUM(Rating) FROM Review WHERE UserID = ${taskerID}) AS TotalRating 
+    FROM Job, JobStatus, User 
+    WHERE Job.JobID = JobStatus.JobID 
+    AND User.ID = JobStatus.TaskerID 
+    AND Job.JobID = ${jobID} AND Status = 6 AND JobStatus.TaskerID = ${taskerID}`;
+
     console.log(queryString);
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -528,10 +380,18 @@ function fetchHirerHistoryJobInfo(requestFields, callback) {
 }
 
 
-function fetchUserInfo(userId, callback) {
+function fetchUserInfo(requestFields, callback) {
 
-    let queryString = `SELECT User.ID, FirstName, LastName, EmailID, UserType, Dob, ProfileImage, Bio, (SELECT COUNT(ID) FROM Review WHERE UserID = ${userId}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${userId}) AS TotalRating, Address.ID AS AddressID, Address.FullAddress FROM User, Address WHERE User.AddressID = Address.ID AND User.ID = ${userId}`
-    //console.log(queryString)
+    let userId =  requestFields.userID;
+         
+    let queryString = `SELECT User.ID, FirstName, LastName, EmailID, UserType, Dob, ProfileImage, Bio, 
+    (SELECT COUNT(ID) FROM Review WHERE UserID = ${userId}) AS NumberOfReviews, 
+    (SELECT SUM(Rating) FROM Review WHERE UserID = ${userId}) AS TotalRating, 
+    Address.ID AS AddressID, Address.* 
+    FROM User, Address 
+    WHERE User.AddressID = Address.ID AND User.ID = ${userId}`;
+
+    console.log(queryString)
     connection.query(queryString, function (error, rows) {
         if (error) {
             callback('error', 'System error');
@@ -548,7 +408,17 @@ function fetchUserInfo(userId, callback) {
                 'bio': rows[0].Bio,
                 'numberOfReviews': rows[0].NumberOfReviews,
                 'totalRating': rows[0].TotalRating == undefined ? 0 : rows[0].TotalRating,
-                'address': { 'addressID': rows[0].AddressID, 'fullAddress': rows[0].FullAddress }
+                "address": {
+                    "addressID": rows[0].AddressID,
+                    "streetAddress": rows[0].StreetAddress,
+                    "city": rows[0].City,
+                    "province": rows[0].Province,
+                    "postalCode": rows[0].PostalCode,
+                    "country": rows[0].Country,
+                    "latitude": rows[0].Latitude,
+                    "longitude": rows[0].Longitude,
+                    "fullAddress": rows[0].FullAddress
+                }
             })
         }
     })
@@ -566,7 +436,8 @@ function addAddressRequest(requestFields, callback) {
     let latitude = requestFields.latitude;
     let longitude = requestFields.longitude;
 
-    let queryString = `INSERT INTO Address (StreetAddress, City, province, PostalCode, Country, FullAddress, Latitude, Longitude) VALUES ('${streetAddress}', '${city}', '${province}', '${postalCode}', '${country}', '${fullAddress}', ${latitude}, ${longitude})`;
+    let queryString = `INSERT INTO Address (StreetAddress, City, province, PostalCode, Country, FullAddress, Latitude, Longitude) 
+    VALUES ('${streetAddress}', '${city}', '${province}', '${postalCode}', '${country}', '${fullAddress}', ${latitude}, ${longitude})`;
 
 
     connection.query(queryString, function (error, rows) {
@@ -582,7 +453,7 @@ function addAddressRequest(requestFields, callback) {
                 if (error) {
                     callback('error', 'System error - updating address id')
                 } else {
-                    callback('success', 'Address added successfully!')
+                    console.log('success', 'Address added successfully!')
                 }
             })
         }
@@ -592,6 +463,7 @@ function addAddressRequest(requestFields, callback) {
 
 
 function updateUserInfo(requestFields, callback) {
+
     let userID = requestFields.userID
     let firstName = requestFields.firstName
     let lastName = requestFields.lastName
@@ -607,19 +479,10 @@ function updateUserInfo(requestFields, callback) {
     let latitude = addressJson.latitude;
     let longitude = addressJson.longitude;
 
-    // console.log(`${fullAddress}, ${streetAddress}, ${city}, ${province}, ${postalCode}, ${country}, ${latitude}, ${longitude}`);
+    let addressQueryString = `UPDATE Address SET StreetAddress = '${streetAddress}', City = '${city}', Province = '${province}', 
+    PostalCode = '${postalCode}', Country = '${country}', FullAddress = '${fullAddress}', 
+    Latitude = ${latitude}, Longitude = ${longitude} WHERE ID = ${addressID}`;
 
-    // let queryString = `UPDATE User SET FirstName = '${firstName}', LastName = '${lastName}', Bio = '${bio}' WHERE ID = ${userID}`;
-
-    // connection.query(queryString, function (error, rows) {
-    //     if (error) {
-    //         callback('error', 'System error');
-    //     } else {
-    //         callback('success', 'Profile updated successfully');
-    //     }
-    // })
-
-    let addressQueryString = `UPDATE Address SET StreetAddress = '${streetAddress}', City = '${city}', Province = '${province}', PostalCode = '${postalCode}', Country = '${country}', FullAddress = '${fullAddress}', Latitude = ${latitude}, Longitude = ${longitude} WHERE ID = ${addressID}`;
     console.log(`Address insert query : ${addressQueryString}`);
     connection.query(addressQueryString, function (error, rows) {
 
@@ -627,9 +490,6 @@ function updateUserInfo(requestFields, callback) {
             console.log('System Error - Updating address')
             callback('error', 'System Error - Updating address');
         } else {
-
-            // let addressId = rows.insertId;
-            // // console.log(`Address ID : ${addressId}`);
 
             let queryString = `UPDATE User SET FirstName = '${firstName}', LastName = '${lastName}', Bio = '${bio}', AddressID = '${addressID}' WHERE ID = ${userID}`;
             console.log(queryString)
@@ -655,7 +515,14 @@ function fetchTaskerHomeData(requestFields, callback) {
         if (status == 'error') {
             callback('error', 'System error - Approved Jobs')
         } else {
-            let queryString = `SELECT * FROM (SELECT Job.JobID AS jobid, Name AS JobName, Wage As JobWage, Date As JobDate, Description AS JobInfo, HirerID AS Hirer, JobCategory AS Category FROM Job WHERE Date > ${currentTimestamp}) Q2 LEFT JOIN (SELECT Job.* , JobStatus.ID, JobStatus.TaskerID, JobStatus.Status FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND TaskerID = ${userID} AND Job.Date > ${currentTimestamp}) Q1 ON Q1.JobID = Q2.JobID ORDER BY Q2.JobDate`;
+            let queryString = `SELECT * FROM 
+            (SELECT Job.JobID AS jobid, Name AS JobName, Wage As JobWage, Date As JobDate, 
+             Description AS JobInfo, HirerID AS Hirer, JobCategory AS Category FROM Job 
+             WHERE Date > ${currentTimestamp}) Q2 LEFT JOIN 
+             (SELECT Job.* , JobStatus.ID, JobStatus.TaskerID, JobStatus.Status FROM Job, JobStatus 
+              WHERE Job.JobID = JobStatus.JobID 
+              AND TaskerID = ${userID} AND Job.Date > ${currentTimestamp}) 
+              Q1 ON Q1.JobID = Q2.JobID ORDER BY Q2.JobDate`;
 
             connection.query(queryString, function (error, rows) {
                 if (error) {
@@ -686,8 +553,11 @@ function fetchTaskerHomeData(requestFields, callback) {
 
 
 function getTaskerApprovedJobList(userID, callback) {
-    // SELECT Job.JobID, Name, Date, JobCategory,  From Job, JobRequest WHERE Job.JobID = JobRequest.JobID AND WorkerID = 14 AND STATUS = 1
-    let queryString = `SELECT JobStatus.ID As JobStatusID, Job.JobID, Name, JobCategory, Job.HirerID, Date, Description, Wage, Status From Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND TaskerID = ${userID} AND Status IN (2, 5)`;
+
+    let queryString = `SELECT JobStatus.ID As JobStatusID, Job.JobID, Name, JobCategory, Job.HirerID, Date, Description, Wage, Status 
+    From Job, JobStatus 
+    WHERE Job.JobID = JobStatus.JobID
+    AND TaskerID = ${userID} AND Status IN (2, 5)`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -771,7 +641,11 @@ function deleteJobFromJobStatusTable(requestFields, callback) {
 function fetchTaskerAppliedJobList(requestFields, callback) {
     let taskerID = requestFields.taskerID;
 
-    let queryString = `SELECT Job.* , JobStatus.ID As JobStatusID, JobStatus.Status, JobStatus.DateRequested FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status != 4 AND Status != 6 AND JobStatus.TaskerID = ${taskerID} ORDER BY Date`
+    let queryString = `SELECT Job.* , JobStatus.ID As JobStatusID, JobStatus.Status, JobStatus.DateRequested 
+    FROM Job, JobStatus 
+    WHERE Job.JobID = JobStatus.JobID 
+    AND Status != 4 AND Status != 6 AND JobStatus.TaskerID = ${taskerID} 
+    ORDER BY Date`
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -800,7 +674,11 @@ function fetchTaskerAppliedJobList(requestFields, callback) {
 function fetchTaskerSavedJobList(requestFields, callback) {
     let taskerID = requestFields.taskerID;
 
-    let queryString = `SELECT Job.* , JobStatus.ID As JobStatusID, JobStatus.Status, JobStatus.DateRequested FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status = 4 AND JobStatus.TaskerID = ${taskerID} ORDER BY Date`
+    let queryString = `SELECT Job.* , JobStatus.ID As JobStatusID, JobStatus.Status, JobStatus.DateRequested 
+    FROM Job, JobStatus 
+    WHERE Job.JobID = JobStatus.JobID 
+    AND Status = 4 AND JobStatus.TaskerID = ${taskerID} 
+    ORDER BY Date`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -831,7 +709,18 @@ function fetchTaskerJobInfo(requestFields, callback) {
     let hirerID = requestFields.hirerID;
     let taskerID = requestFields.taskerID;
 
-    let queryString = `SELECT Job.*, User.ID AS UserID, FirstName, LastName, EmailID, ProfileImage, Dob, Bio, Address.*, (SELECT COUNT(ID) FROM Review WHERE UserID = ${hirerID}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${hirerID}) AS TotalRating, (SELECT ID from JobStatus WHERE TaskerID = ${taskerID} AND JobID = ${jobID}) AS JobStatusID, (SELECT Status from JobStatus WHERE TaskerID = ${taskerID} AND JobID = ${jobID}) AS JobStatus FROM User, Job, Address WHERE Job.HirerID = User.ID AND User.AddressID = Address.ID AND User.ID = ${hirerID} AND Job.JobID = ${jobID}`;
+    let queryString = `SELECT Job.*, User.ID AS UserID, FirstName, LastName, EmailID, ProfileImage, Dob, Bio, Address.*, 
+    (SELECT COUNT(ID) FROM Review WHERE UserID = ${hirerID}) AS NumberOfReviews, 
+    (SELECT SUM(Rating) FROM Review WHERE UserID = ${hirerID}) AS TotalRating, 
+    (SELECT ID from JobStatus WHERE TaskerID = ${taskerID} 
+     AND JobID = ${jobID}) AS JobStatusID, 
+     (SELECT Status from JobStatus 
+      WHERE TaskerID = ${taskerID} 
+      AND JobID = ${jobID}) AS JobStatus 
+      FROM User, Job, Address 
+      WHERE Job.HirerID = User.ID 
+      AND User.AddressID = Address.ID 
+      AND User.ID = ${hirerID} AND Job.JobID = ${jobID}`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -886,7 +775,10 @@ function fetchTaskerJobHistoryList(requestFields, callback) {
     let taskerID = requestFields.taskerID;
     let currentTimestamp = Date.now()
 
-    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status FROM Job, JobStatus WHERE Job.JobID = JobStatus.JobID AND Status = 6 AND TaskerID = ${taskerID} ORDER BY Date DESC`;
+    let queryString = `SELECT Job.*, JobStatus.ID, JobStatus.Status 
+    FROM Job, JobStatus 
+    WHERE Job.JobID = JobStatus.JobID AND Status = 6 AND TaskerID = ${taskerID} 
+    ORDER BY Date DESC`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -917,7 +809,18 @@ function fetchTaskerHistoryJobInfo(requestFields, callback) {
     let hirerID = requestFields.hirerID;
     let taskerID = requestFields.taskerID;
 
-    let queryString = `SELECT Job.*, JobStatus.ID AS JobStatusID, JobStatus.Status, User.ID As UserID, User.FirstName, User.LastName, User.ProfileImage, User.Dob, User.Bio, Address.*, (SELECT COUNT(ID) FROM Review WHERE UserID = ${hirerID}) AS NumberOfReviews, (SELECT SUM(Rating) FROM Review WHERE UserID = ${hirerID}) AS TotalRating FROM Job, JobStatus, User, Address WHERE Job.JobID = JobStatus.JobID AND User.ID = Job.HirerID AND Job.JobID = ${jobID} AND Status = 6 AND JobStatus.TaskerID = ${taskerID} AND Address.ID = User.AddressID`;
+    let queryString = `SELECT Job.*, JobStatus.ID AS JobStatusID, JobStatus.Status, 
+    User.ID As UserID, User.FirstName, User.LastName, User.ProfileImage, 
+    User.Dob, User.Bio, Address.*, 
+    (SELECT COUNT(ID) FROM Review WHERE UserID = ${hirerID}) AS NumberOfReviews, 
+    (SELECT SUM(Rating) FROM Review WHERE UserID = ${hirerID}) AS TotalRating 
+    FROM Job, JobStatus, User, Address 
+    WHERE Job.JobID = JobStatus.JobID 
+    AND User.ID = Job.HirerID 
+    AND Job.JobID = ${jobID} AND Status = 6 
+    AND JobStatus.TaskerID = ${taskerID} 
+    AND Address.ID = User.AddressID`;
+
     console.log(queryString);
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -968,7 +871,13 @@ function fetchTaskerHistoryJobInfo(requestFields, callback) {
 function fetchUserReviewList(requestFields, callback) {
     let userID = requestFields.userID;
 
-    let queryString = `SELECT Review.*, User.ProfileImage AS ReviewerProfilePic, User.FirstName AS ReviewerName, Job.Name AS JobName FROM Review, User, Job WHERE Review.ReviewerID = User.ID AND Review.JobID = Job.JobID AND Review.UserID = ${userID} ORDER BY Date Desc`
+    let queryString = `SELECT Review.*, User.ProfileImage AS ReviewerProfilePic, 
+    User.FirstName AS ReviewerName, Job.Name AS JobName 
+    FROM Review, User, Job 
+    WHERE Review.ReviewerID = User.ID 
+    AND Review.JobID = Job.JobID 
+    AND Review.UserID = ${userID} 
+    ORDER BY Date Desc`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -996,7 +905,10 @@ function fetchReviewOfJob(requestFields, callback) {
     let jobID = requestFields.jobID;
     let reviewerID = requestFields.reviewerID;
 
-    let queryString = `SELECT Review.*, User.ID AS ReviewerID, User.FirstName, User.ProfileImage FROM Review, User WHERE Review.ReviewerID = User.ID AND JobID = ${jobID} AND ReviewerID = ${reviewerID} `;
+    let queryString = `SELECT Review.*, User.ID AS ReviewerID, User.FirstName, User.ProfileImage 
+    FROM Review, User 
+    WHERE Review.ReviewerID = User.ID 
+    AND JobID = ${jobID} AND ReviewerID = ${reviewerID}`;
 
     connection.query(queryString, function (error, rows) {
         if (error) {
@@ -1028,8 +940,10 @@ function addNewReview(requestFields, callback) {
     let rating = requestFields.rating
     let review = requestFields.review
 
-    let queryString = `INSERT INTO Review (JobID, UserID, ReviewerID, Date, Rating, Review) VALUES (${jobID}, ${userID}, ${reviewerID}, ${date}, ${rating}, "${review}")`
+    let queryString = `INSERT INTO Review (JobID, UserID, ReviewerID, Date, Rating, Review) 
+    VALUES (${jobID}, ${userID}, ${reviewerID}, ${date}, ${rating}, "${review}")`
     console.log(queryString)
+
     connection.query(queryString, function (error, result) {
 
         if (error) {
@@ -1124,7 +1038,7 @@ function fetchDataForNotification(recieverID, senderID, notificationTitle, notif
                     notificationServer.sendNotification(token, notificationTitle, `${name} ${notificationMessageSubString}`);
                 }
 
-            }) 
+            })
         }
 
     })
@@ -1133,13 +1047,9 @@ function fetchDataForNotification(recieverID, senderID, notificationTitle, notif
 
 module.exports = {
     addSignedUpUser,
-    // checkEmailVerification,
-    // resendEmailVerificationCode,
-    // createActivationCodeForNewPassword,
-    // createNewPassword,
     loginUser,
     fetchPostJobResponse,
-    fetchHirerHomeData,
+    fetchHirerHomeData, 
     fetchHirerUpcomingJobList,
     fetchHirerJobHistoryList,
     fetchUserInfo,
@@ -1160,9 +1070,4 @@ module.exports = {
     addAddressRequest,
     fetchHirerJobTaskerDescription,
     updateNotificationToken
-}
-
-
-function generateActivationRandomNumber() {
-    return Math.floor(Math.random() * 10000);
 }

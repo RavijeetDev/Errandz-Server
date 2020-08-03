@@ -55,9 +55,9 @@ server.post('/signup', (request, response) => {
 
     let signUpFields = request.fields;
     dbResult.addSignedUpUser(signUpFields, (status, fetchedData) => {
-         
-            sendResponseWithoutData(response, status, fetchedData);
- 
+
+        sendResponseWithoutData(response, status, fetchedData);
+
     });
 
 });
@@ -87,7 +87,7 @@ server.post('/addAddress', (request, response) => {
             sendResponseWithoutData(response, status, message);
         } else {
             let requestFields = request.fields
-            dbResult.addAddressRequest(requestFields, (status, fetchedData) => {
+            dbResult.addAddressRequest(requestFields, (status, message) => {
                 sendResponseWithoutData(response, status, message);
             })
         }
@@ -95,332 +95,309 @@ server.post('/addAddress', (request, response) => {
 })
 
 server.post('/hirerHomeData', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchHirerHomeData(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchHirerHomeData(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
+
         }
     })
 })
 
 server.post('/postJob', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchPostJobResponse(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields;
+            dbResult.fetchPostJobResponse(requestFields, (status, message) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
     })
 })
 
 server.post('/hirerUpcomingJobList', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchHirerUpcomingJobList(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchHirerUpcomingJobList(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/hirerUpcomingJobDescription', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchHirerJobTaskerDescription(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchHirerJobTaskerDescription(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/hirerJobHistoryList', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchHirerJobHistoryList(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchHirerJobHistoryList(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/userInfo', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchUserInfo(requestFields.userID, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchUserInfo(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/uploadUserInfo', (request, response) => {
-    let requestFields = request.fields;
-    console.log(requestFields);
-    dbResult.updateUserInfo(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields;
+            dbResult.updateUserInfo(requestFields, (status, message) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
     })
 })
 
 
 server.post('/taskerHomeData', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchTaskerHomeData(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchTaskerHomeData(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 
 server.post('/updateJobStatus', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.updateJobStatus(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields;
+            dbResult.updateJobStatus(requestFields, (status, message) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
     })
 })
 
 server.post('/deleteJobStatus', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.deleteJobFromJobStatusTable(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields;
+            dbResult.deleteJobFromJobStatusTable(requestFields, (status, message) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
     })
 })
 
 server.post('/applyForJob', (request, response) => {
-    let requestFields = request.fields
-    dbResult.updateJobStatus(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields
+            dbResult.updateJobStatus(requestFields, (status, message) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
     })
 })
 
 
 server.post('/taskerAppliedJobList', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchTaskerAppliedJobList(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchTaskerAppliedJobList(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/taskerSavedJobList', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchTaskerSavedJobList(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchTaskerSavedJobList(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/taskerJobInfo', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchTaskerJobInfo(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchTaskerJobInfo(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/taskerJobHistoryList', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchTaskerJobHistoryList(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchTaskerJobHistoryList(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/taskerHistoryJobInfo', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchTaskerHistoryJobInfo(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchTaskerHistoryJobInfo(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/userReviewList', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchUserReviewList(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchUserReviewList(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/historyJobInfo', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchHirerHistoryJobInfo(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchHirerHistoryJobInfot(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/reviewsOfJob', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.fetchReviewOfJob(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.fetchReviewOfJob(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
 
 server.post('/postReview', (request, response) => {
-    let requestFields = request.fields
-    dbResult.addNewReview(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields
+            dbResult.addNewReview(requestFields, (status, message) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
     })
 })
 
 server.post('/jobRequestList', (request, response) => {
-    let requestFields = request.fields;
-    dbResult.getRequestedJobInfo(requestFields, (status, fetchedData) => {
-        if (status == 'success') {
-            response.send(
-                {
-                    "result": {
-                        "status": status,
-                        "message": "success"
-                    },
-                    "data": fetchedData
-                }
-            )
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
         } else {
-            response.send({ "result": { "status": status, "message": fetchedData } })
+            let requestFields = request.fields;
+            dbResult.getRequestedJobInfo(requestFields, (status, output) => {
+
+                sendResponseWithData(response, status, output)
+
+            })
         }
     })
 })
@@ -428,9 +405,15 @@ server.post('/jobRequestList', (request, response) => {
 
 
 server.post('/updateNotificationToken', (request, response) => {
-    let requestFields = request.fields
-    dbResult.updateNotificationToken(requestFields, (status, fetchedData) => {
-        response.send({ "result": { "status": status, "message": fetchedData } })
+    authValidation.checkTokenValidation(request, (status, message) => {
+        if (status === 404) {
+            sendResponseWithoutData(response, status, message);
+        } else {
+            let requestFields = request.fields
+            dbResult.updateNotificationToken(requestFields, (status, message) => {
+                sendResponseWithoutData(response, status, message);
+            })
+        }
     })
 })
 
