@@ -350,7 +350,7 @@ server.post('/historyJobInfo', (request, response) => {
             sendResponseWithoutData(response, status, message);
         } else {
             let requestFields = request.fields;
-            dbResult.fetchHirerHistoryJobInfot(requestFields, (status, output) => {
+            dbResult.fetchHirerHistoryJobInfo(requestFields, (status, output) => {
 
                 sendResponseWithData(response, status, output)
 
